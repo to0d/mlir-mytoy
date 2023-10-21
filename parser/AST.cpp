@@ -16,7 +16,7 @@
 #include "llvm/ADT/TypeSwitch.h"
 #include "llvm/Support/raw_ostream.h"
 
-using namespace toy;
+using namespace mytoy;
 
 namespace {
 
@@ -226,7 +226,7 @@ void ASTDumper::dump(ModuleAST *node) {
     dump(&f);
 }
 
-namespace toy {
+namespace mytoy {
 
 // Public API
 void dump(ModuleAST &module) { ASTDumper().dump(&module); }

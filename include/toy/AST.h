@@ -24,7 +24,7 @@
 #include <vector>
 #include <optional>
 
-namespace toy {
+namespace mytoy {
 
 /// A variable type with shape information.
 struct VarType {

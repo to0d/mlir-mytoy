@@ -27,6 +27,6 @@
 /// Include the auto-generated header file containing the declarations of the
 /// toy operations.
 #define GET_OP_CLASSES
-#include "toy/Ops.h.inc"
+#include "toy/myops.h.inc"
 
 #endif // MLIR_TUTORIAL_TOY_DIALECT_H_

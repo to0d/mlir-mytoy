@@ -26,7 +26,7 @@
 #include <vector>
 #include <optional>
 
-namespace toy {
+namespace mytoy {
 
 /// This is a simple recursive parser for the Toy language. It produces a well
 /// formed AST from a stream of Token supplied by the Lexer. No semantic checks
