@@ -1,0 +1,10 @@
+# RUN: mytoy %s -emit=mlir 2>&1 | FileCheck %s
+def main() {
+  
+}
+
+# CHECK:"builtin.module"() ({
+# CHECK-NEXT:  "mytoy.func"() ({
+# CHECK-NEXT:  ^bb0:
+# CHECK-NEXT:  }) {function_type = () -> (), sym_name = "main"} : () -> ()
+# CHECK-NEXT:}) : () -> ()
