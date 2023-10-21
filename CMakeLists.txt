@@ -47,6 +47,8 @@ add_definitions(${LLVM_DEFINITIONS})
 add_llvm_executable(mytoy
 toyc.cpp
 parser/AST.cpp
+mlir/MLIRGen.cpp
+mlir/Dialect.cpp
 
 DEPENDS
 MytoyOpsIncGen
