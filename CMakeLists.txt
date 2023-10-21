@@ -54,6 +54,11 @@ MytoyOpsIncGen
 include_directories(include/)
 target_link_libraries(mytoy
 PRIVATE
-  MLIRSupport)
+  MLIRSupport
+  MLIRAnalysis
+  MLIRIR
+  MLIRParser
+  MLIRSideEffectInterfaces
+  MLIRTransforms)
 
 add_subdirectory(include)
