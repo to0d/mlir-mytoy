@@ -1,0 +1,104 @@
+/*===- TableGen'erated file -------------------------------------*- C++ -*-===*\
+|*                                                                            *|
+|* Op Definitions                                                             *|
+|*                                                                            *|
+|* Automatically generated file, do not edit!                                 *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
+
+#ifdef GET_OP_LIST
+#undef GET_OP_LIST
+
+::mlir::mytoy::ConstantOp
+#endif  // GET_OP_LIST
+
+#ifdef GET_OP_CLASSES
+#undef GET_OP_CLASSES
+
+
+//===----------------------------------------------------------------------===//
+// Local Utility Method Definitions
+//===----------------------------------------------------------------------===//
+
+namespace mlir {
+namespace mytoy {
+} // namespace mytoy
+} // namespace mlir
+namespace mlir {
+namespace mytoy {
+
+//===----------------------------------------------------------------------===//
+// ::mlir::mytoy::ConstantOp definitions
+//===----------------------------------------------------------------------===//
+
+namespace detail {
+ConstantOpGenericAdaptorBase::ConstantOpGenericAdaptorBase(::mlir::DictionaryAttr attrs, const ::mlir::EmptyProperties &properties, ::mlir::RegionRange regions) : odsAttrs(attrs), odsRegions(regions) {  if (odsAttrs)
+    odsOpName.emplace("mytoy.constant", odsAttrs.getContext());
+}
+
+std::pair<unsigned, unsigned> ConstantOpGenericAdaptorBase::getODSOperandIndexAndLength(unsigned index, unsigned odsOperandsSize) {
+  return {index, 1};
+}
+
+::mlir::DictionaryAttr ConstantOpGenericAdaptorBase::getAttributes() {
+  return odsAttrs;
+}
+
+} // namespace detail
+ConstantOpAdaptor::ConstantOpAdaptor(ConstantOp op) : ConstantOpAdaptor(op->getOperands(), op->getAttrDictionary(), op.getProperties(), op->getRegions()) {}
+
+::mlir::LogicalResult ConstantOpAdaptor::verify(::mlir::Location loc) {
+  return ::mlir::success();
+}
+
+std::pair<unsigned, unsigned> ConstantOp::getODSOperandIndexAndLength(unsigned index) {
+  return {index, 1};
+}
+
+::mlir::Operation::operand_range ConstantOp::getODSOperands(unsigned index) {
+  auto valueRange = getODSOperandIndexAndLength(index);
+  return {std::next(getOperation()->operand_begin(), valueRange.first),
+           std::next(getOperation()->operand_begin(), valueRange.first + valueRange.second)};
+}
+
+std::pair<unsigned, unsigned> ConstantOp::getODSResultIndexAndLength(unsigned index) {
+  return {index, 1};
+}
+
+::mlir::Operation::result_range ConstantOp::getODSResults(unsigned index) {
+  auto valueRange = getODSResultIndexAndLength(index);
+  return {std::next(getOperation()->result_begin(), valueRange.first),
+           std::next(getOperation()->result_begin(), valueRange.first + valueRange.second)};
+}
+
+void ConstantOp::build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState) {
+}
+
+void ConstantOp::build(::mlir::OpBuilder &odsBuilder, ::mlir::OperationState &odsState, ::mlir::TypeRange resultTypes) {
+  assert(resultTypes.size() == 0u && "mismatched number of results");
+  odsState.addTypes(resultTypes);
+}
+
+void ConstantOp::build(::mlir::OpBuilder &, ::mlir::OperationState &odsState, ::mlir::TypeRange resultTypes, ::mlir::ValueRange operands, ::llvm::ArrayRef<::mlir::NamedAttribute> attributes) {
+  assert(operands.size() == 0u && "mismatched number of parameters");
+  odsState.addOperands(operands);
+  odsState.addAttributes(attributes);
+  assert(resultTypes.size() == 0u && "mismatched number of return types");
+  odsState.addTypes(resultTypes);
+}
+
+::mlir::LogicalResult ConstantOp::verifyInvariantsImpl() {
+  return ::mlir::success();
+}
+
+::mlir::LogicalResult ConstantOp::verifyInvariants() {
+  return verifyInvariantsImpl();
+}
+
+} // namespace mytoy
+} // namespace mlir
+MLIR_DEFINE_EXPLICIT_TYPE_ID(::mlir::mytoy::ConstantOp)
+
+
+#endif  // GET_OP_CLASSES
+

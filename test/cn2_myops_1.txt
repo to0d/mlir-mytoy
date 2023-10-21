@@ -1,0 +1,25 @@
+/*===- TableGen'erated file -------------------------------------*- C++ -*-===*\
+|*                                                                            *|
+|* Dialect Declarations                                                       *|
+|*                                                                            *|
+|* Automatically generated file, do not edit!                                 *|
+|*                                                                            *|
+\*===----------------------------------------------------------------------===*/
+
+namespace mlir {
+namespace mytoy {
+
+class MyToyDialect : public ::mlir::Dialect {
+  explicit MyToyDialect(::mlir::MLIRContext *context);
+
+  void initialize();
+  friend class ::mlir::MLIRContext;
+public:
+  ~MyToyDialect() override;
+  static constexpr ::llvm::StringLiteral getDialectNamespace() {
+    return ::llvm::StringLiteral("mytoy");
+  }
+};
+} // namespace mytoy
+} // namespace mlir
+MLIR_DECLARE_EXPLICIT_TYPE_ID(::mlir::mytoy::MyToyDialect)

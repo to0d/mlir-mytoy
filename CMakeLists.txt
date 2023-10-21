@@ -47,8 +47,13 @@ add_definitions(${LLVM_DEFINITIONS})
 add_llvm_executable(mytoy
 toyc.cpp
 parser/AST.cpp
+
+DEPENDS
+MytoyOpsIncGen
 )
 include_directories(include/)
 target_link_libraries(mytoy
 PRIVATE
   MLIRSupport)
+
+add_subdirectory(include)

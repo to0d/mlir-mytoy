@@ -1,0 +1,6 @@
+set(LLVM_TARGET_DEFINITIONS myops.td)
+mlir_tablegen(myops.h.inc -gen-op-decls)
+mlir_tablegen(myops.cpp.inc -gen-op-defs)
+mlir_tablegen(Dialect.h.inc -gen-dialect-decls)
+mlir_tablegen(Dialect.cpp.inc -gen-dialect-defs)
+add_public_tablegen_target(MytoyOpsIncGen)
