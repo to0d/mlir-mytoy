@@ -24,4 +24,23 @@ def ConstantOp : Toy_Op<"constant"> {
     ];
 }
 
+def FuncOp : Toy_Op<"func"> {
+
+  let arguments = (ins
+    SymbolNameAttr:$sym_name,
+    TypeAttrOf<FunctionType>:$function_type,
+    OptionalAttr<DictArrayAttr>:$arg_attrs,
+    OptionalAttr<DictArrayAttr>:$res_attrs
+  );
+  let regions = (region AnyRegion:$body);
+
+  let builders = [OpBuilder<(ins
+    "StringRef":$name, "FunctionType":$type,
+    CArg<"ArrayRef<NamedAttribute>", "{}">:$attrs)
+  >];
+
+  let skipDefaultBuilders = 1;
+
+}
+
 #endif // TOY_OPS
