@@ -269,8 +269,21 @@ private:
   /// Future expressions will be able to reference this variable through symbol
   /// table lookup.
   mlir::Value mlirGen(VarDeclExprAST &vardecl) {
-      emitError(loc(vardecl.loc())) << "unuspport ";
+    auto *init = vardecl.getInitVal();
+    if (!init) {
+      emitError(loc(vardecl.loc()),
+                "missing initializer in variable declaration");
       return nullptr;
+    }
+
+    mlir::Value value = mlirGen(*init);
+    if (!value)
+      return nullptr;
+
+    // Register the value in the symbol table.
+    if (failed(declare(vardecl.getName(), value)))
+      return nullptr;
+    return value;
   }
 
   /// Codegen a list of expression, return failure if one of them hit an error.
