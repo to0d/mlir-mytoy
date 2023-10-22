@@ -3,8 +3,9 @@ def main() {
     var a = 5.5;
 }
 
-# CHECK:"builtin.module"() ({
-# CHECK-NEXT:  "mytoy.func"() ({
-# CHECK-NEXT:    %0 = "mytoy.constant"() {value = dense<5.500000e+00> : tensor<f64>} : () -> tensor<f64>
-# CHECK-NEXT:  }) {function_type = () -> (), sym_name = "main"} : () -> ()
-# CHECK-NEXT:}) : () -> ()
+# CHECK:module {
+# CHECK-NEXT:  mytoy.func @main() {
+# CHECK-NEXT:    %0 = mytoy.constant dense<5.500000e+00> : tensor<f64>
+# CHECK-NEXT:    mytoy.return
+# CHECK-NEXT:  }
+# CHECK-NEXT:}

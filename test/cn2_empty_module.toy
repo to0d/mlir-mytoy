@@ -3,8 +3,8 @@ def main() {
   
 }
 
-# CHECK:"builtin.module"() ({
-# CHECK-NEXT:  "mytoy.func"() ({
-# CHECK-NEXT:  ^bb0:
-# CHECK-NEXT:  }) {function_type = () -> (), sym_name = "main"} : () -> ()
-# CHECK-NEXT:}) : () -> ()
+# CHECK:module {
+# CHECK-NEXT:  mytoy.func @main() {
+# CHECK-NEXT:    mytoy.return
+# CHECK-NEXT:  }
+# CHECK-NEXT:}
