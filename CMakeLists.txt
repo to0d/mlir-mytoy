@@ -49,6 +49,7 @@ toyc.cpp
 parser/AST.cpp
 mlir/MLIRGen.cpp
 mlir/Dialect.cpp
+mlir/ToyCombine.cpp
 
 DEPENDS
 MytoyOpsIncGen
