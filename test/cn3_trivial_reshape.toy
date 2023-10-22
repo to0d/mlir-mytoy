@@ -1,0 +1,18 @@
+# RUN: mytoy %s -emit=mlir 2>&1 | FileCheck %s
+
+def main() {
+  var a<2,1> = [1, 2];
+  var b<2,1> = a;
+  var c<2,1> = b;
+  print(c);
+}
+
+# CHECK: mytoy.func @main() {
+# CHECK-NEXT:    %0 = mytoy.constant 
+# CHECK-SAME:       dense<[1.000000e+00, 2.000000e+00]> : tensor<2xf64>
+# CHECK-NEXT:    %1 = mytoy.reshape(%0 : tensor<2xf64>) to tensor<2x1xf64>
+# CHECK-NEXT:    %2 = mytoy.reshape(%1 : tensor<2x1xf64>) to tensor<2x1xf64>
+# CHECK-NEXT:    %3 = mytoy.reshape(%2 : tensor<2x1xf64>) to tensor<2x1xf64>
+# CHECK-NEXT:    mytoy.print %3 : tensor<2x1xf64>
+# CHECK-NEXT:    mytoy.return
+# CHECK-NEXT:  }
