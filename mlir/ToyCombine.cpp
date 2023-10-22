@@ -20,7 +20,7 @@ using namespace mytoy;
 
 namespace {
 /// Include the patterns defined in the Declarative Rewrite framework.
-#include "toy/myops.cpp.inc"
+#include "ToyCombine.inc"
 } // namespace
 
 /// This is an example of a c++ rewrite pattern for the TransposeOp. It
@@ -59,3 +59,9 @@ void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
   results.add<SimplifyRedundantTranspose>(context);
 }
 
+/// Register our patterns as "canonicalization" patterns on the ReshapeOp so
+/// that they can be picked up by the Canonicalization framework.
+void ReshapeOp::getCanonicalizationPatterns(RewritePatternSet &results,
+                                            MLIRContext *context) {
+  results.add<ReshapeReshapeOptPattern>(context);
+}

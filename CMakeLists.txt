@@ -44,6 +44,12 @@ include_directories(${STANDALONE_BINARY_DIR}/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+set(LLVM_TARGET_DEFINITIONS mlir/ToyCombine.td)
+mlir_tablegen(ToyCombine.inc -gen-rewriters)
+add_public_tablegen_target(MyToyCombineIncGen)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 add_llvm_executable(mytoy
 toyc.cpp
 parser/AST.cpp
@@ -53,6 +59,7 @@ mlir/ToyCombine.cpp
 
 DEPENDS
 MytoyOpsIncGen
+MyToyCombineIncGen
 )
 include_directories(include/)
 target_link_libraries(mytoy
