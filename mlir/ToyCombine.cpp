@@ -63,5 +63,5 @@ void TransposeOp::getCanonicalizationPatterns(RewritePatternSet &results,
 /// that they can be picked up by the Canonicalization framework.
 void ReshapeOp::getCanonicalizationPatterns(RewritePatternSet &results,
                                             MLIRContext *context) {
-  results.add<ReshapeReshapeOptPattern>(context);
+  results.add<ReshapeReshapeOptPattern, FoldConstantReshapeOptPattern>(context);
 }

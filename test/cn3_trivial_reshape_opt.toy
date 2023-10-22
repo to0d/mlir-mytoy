@@ -7,10 +7,10 @@ def main() {
   print(c);
 }
 
-# CHECK-LABEL: toy.func @main()
-# CHECK-NEXT:    [[VAL_0:%.*]] = toy.constant
+# CHECK-LABEL: mytoy.func @main()
+# CHECK-NEXT:    [[VAL_0:%.*]] = mytoy.constant
 # CHECK-SAME: 		dense<[
 # CHECK-SAME: 	 	[1.000000e+00], [2.000000e+00]
 # CHECK-SAME: 		]> : tensor<2x1xf64>
-# CHECK-NEXT:    toy.print [[VAL_0]] : tensor<2x1xf64>
-# CHECK-NEXT:    toy.return
+# CHECK-NEXT:    mytoy.print [[VAL_0]] : tensor<2x1xf64>
+# CHECK-NEXT:    mytoy.return
