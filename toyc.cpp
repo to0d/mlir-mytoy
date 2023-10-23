@@ -123,8 +123,8 @@ int dumpMLIR() {
     pm.addPass(mlir::createInlinerPass());
 
     // Add a run of the canonicalizer to optimize the mlir module.
-    pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::createCanonicalizerPass());
     pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::mytoy::createShapeInferencePass());
+    pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::createCanonicalizerPass());    
     pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::createCSEPass());
     
     if (mlir::failed(pm.run(*module)))
