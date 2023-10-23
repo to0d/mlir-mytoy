@@ -16,6 +16,8 @@
 include "mlir/IR/OpBase.td"
 include "mlir/IR/FunctionInterfaces.td"
 include "mlir/IR/SymbolInterfaces.td"
+include "mlir/Interfaces/CallInterfaces.td"
+include "mlir/Interfaces/CastInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 // Provide a definition of the 'toy' dialect in the ODS framework so that we
@@ -113,6 +115,7 @@ def AddOp : Toy_Op<"add", [Pure]> {
 //===----------------------------------------------------------------------===//
 
 def FuncOp : Toy_Op<"func", [
+    DeclareOpInterfaceMethods<CallableOpInterface>,
     FunctionOpInterface, IsolatedFromAbove
   ]> {
   let summary = "user defined function operation";
@@ -163,7 +166,8 @@ def FuncOp : Toy_Op<"func", [
 // GenericCallOp
 //===----------------------------------------------------------------------===//
 
-def GenericCallOp : Toy_Op<"generic_call"> {
+def GenericCallOp : Toy_Op<"generic_call",
+    [DeclareOpInterfaceMethods<CallOpInterface>]> {
   let summary = "generic call operation";
   let description = [{
     Generic calls represent calls to a user defined function that needs to
