@@ -66,6 +66,8 @@ target_link_libraries(mytoy
 PRIVATE
   MLIRSupport
   MLIRAnalysis
+  MLIRCastInterfaces
+  MLIRCallInterfaces
   MLIRIR
   MLIRParser
   MLIRSideEffectInterfaces

@@ -70,6 +70,17 @@ struct ToyInlinerInterface : public DialectInlinerInterface {
       valuesToRepl[it.index()].replaceAllUsesWith(it.value());
   }
 
+  /// Attempts to materialize a conversion for a type mismatch between a call
+  /// from this dialect, and a callable region. This method should generate an
+  /// operation that takes 'input' as the only operand, and produces a single
+  /// result of 'resultType'. If a conversion can not be generated, nullptr
+  /// should be returned.
+  Operation *materializeCallConversion(OpBuilder &builder, Value input,
+                                       Type resultType,
+                                       Location conversionLoc) const final {
+    return builder.create<CastOp>(conversionLoc, resultType, input);
+  }
+  
 };
 
 //===----------------------------------------------------------------------===//
@@ -261,6 +272,25 @@ MutableOperandRange GenericCallOp::getArgOperandsMutable() {
   return getInputsMutable();
 }
 
+
+//===----------------------------------------------------------------------===//
+// CastOp
+//===----------------------------------------------------------------------===//
+
+/// Returns true if the given set of input and result types are compatible with
+/// this cast operation. This is required by the `CastOpInterface` to verify
+/// this operation and provide other additional utilities.
+bool CastOp::areCastCompatible(TypeRange inputs, TypeRange outputs) {
+  if (inputs.size() != 1 || outputs.size() != 1)
+    return false;
+  // The inputs must be Tensors with the same element type.
+  TensorType input = llvm::dyn_cast<TensorType>(inputs.front());
+  TensorType output = llvm::dyn_cast<TensorType>(outputs.front());
+  if (!input || !output || input.getElementType() != output.getElementType())
+    return false;
+  // The shape is required to match if both types are ranked.
+  return !input.hasRank() || !output.hasRank() || input == output;
+}
 
 //===----------------------------------------------------------------------===//
 // FuncOp
