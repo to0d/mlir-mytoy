@@ -122,11 +122,13 @@ int dumpMLIR() {
     // Inline all functions into main and then delete them.
     pm.addPass(mlir::createInlinerPass());
 
-    // Add a run of the canonicalizer to optimize the mlir module.
-    pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::mytoy::createShapeInferencePass());
-    pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::createCanonicalizerPass());    
-    pm.addNestedPass<mlir::mytoy::FuncOp>(mlir::createCSEPass());
-    
+    // Now that there is only one function, we can infer the shapes of each of
+    // the operations.
+    mlir::OpPassManager &optPM = pm.nest<mlir::mytoy::FuncOp>();
+    optPM.addPass(mlir::mytoy::createShapeInferencePass());
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
+
     if (mlir::failed(pm.run(*module)))
       return 4;
   }

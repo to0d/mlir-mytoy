@@ -80,7 +80,6 @@ struct ToyInlinerInterface : public DialectInlinerInterface {
                                        Location conversionLoc) const final {
     return builder.create<CastOp>(conversionLoc, resultType, input);
   }
-
 };
 
 //===----------------------------------------------------------------------===//
@@ -163,7 +162,7 @@ void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
   ConstantOp::build(builder, state, dataType, dataAttribute);
 }
 
-/// The 'OpAsmParser' class provides a collection of methods for parsing
+/// The 'OpAsmPrinter' class provides a collection of methods for parsing
 /// various punctuation, as well as attributes, operands, types, etc. Each of
 /// these methods returns a `ParseResult`. This class is a wrapper around
 /// `LogicalResult` that can be converted to a boolean `true` value on failure,
@@ -239,43 +238,6 @@ void AddOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 /// Infer the output shape of the AddOp, this is required by the shape inference
 /// interface.
 void AddOp::inferShapes() { getResult().setType(getLhs().getType()); }
-
-//===----------------------------------------------------------------------===//
-// GenericCallOp
-//===----------------------------------------------------------------------===//
-
-void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                          StringRef callee, ArrayRef<mlir::Value> arguments) {
-  // Generic call always returns an unranked Tensor initially.
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
-  state.addOperands(arguments);
-  state.addAttribute("callee",
-                     mlir::SymbolRefAttr::get(builder.getContext(), callee));
-}
-
-
-/// Return the callee of the generic call operation, this is required by the
-/// call interface.
-CallInterfaceCallable GenericCallOp::getCallableForCallee() {
-  return (*this)->getAttrOfType<SymbolRefAttr>("callee");
-}
-
-/// Set the callee for the generic call operation, this is required by the call
-/// interface.
-void GenericCallOp::setCalleeFromCallable(CallInterfaceCallable callee) {
-  (*this)->setAttr("callee", callee.get<SymbolRefAttr>());
-}
-
-/// Get the argument operands to the called function, this is required by the
-/// call interface.
-Operation::operand_range GenericCallOp::getArgOperands() { return getInputs(); }
-
-/// Get the argument operands to the called function as a mutable range, this is
-/// required by the call interface.
-MutableOperandRange GenericCallOp::getArgOperandsMutable() {
-  return getInputsMutable();
-}
-
 
 //===----------------------------------------------------------------------===//
 // CastOp
@@ -355,6 +317,41 @@ ArrayAttr FuncOp::getCallableArgAttrs() {
 /// null if there are none.
 ArrayAttr FuncOp::getCallableResAttrs() {
   return getResAttrs().value_or(nullptr);
+}
+
+//===----------------------------------------------------------------------===//
+// GenericCallOp
+//===----------------------------------------------------------------------===//
+
+void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                          StringRef callee, ArrayRef<mlir::Value> arguments) {
+  // Generic call always returns an unranked Tensor initially.
+  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+  state.addOperands(arguments);
+  state.addAttribute("callee",
+                     mlir::SymbolRefAttr::get(builder.getContext(), callee));
+}
+
+/// Return the callee of the generic call operation, this is required by the
+/// call interface.
+CallInterfaceCallable GenericCallOp::getCallableForCallee() {
+  return (*this)->getAttrOfType<SymbolRefAttr>("callee");
+}
+
+/// Set the callee for the generic call operation, this is required by the call
+/// interface.
+void GenericCallOp::setCalleeFromCallable(CallInterfaceCallable callee) {
+  (*this)->setAttr("callee", callee.get<SymbolRefAttr>());
+}
+
+/// Get the argument operands to the called function, this is required by the
+/// call interface.
+Operation::operand_range GenericCallOp::getArgOperands() { return getInputs(); }
+
+/// Get the argument operands to the called function as a mutable range, this is
+/// required by the call interface.
+MutableOperandRange GenericCallOp::getArgOperandsMutable() {
+  return getInputsMutable();
 }
 
 //===----------------------------------------------------------------------===//

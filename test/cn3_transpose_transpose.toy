@@ -11,7 +11,7 @@ def main() {
   print(b);
 }
 
-# CHECK-LABEL: mytoy.func @transpose_transpose(
+# CHECK-LABEL: mytoy.func private @transpose_transpose(
 # CHECK-SAME:                                [[VAL_0:%.*]]: tensor<*xf64>) -> tensor<*xf64> {
 # CHECK-NEXT:    [[VAL_1:%.*]] = mytoy.transpose([[VAL_0]] : tensor<*xf64>) to tensor<*xf64>
 # CHECK-NEXT:    [[VAL_2:%.*]] = mytoy.transpose([[VAL_1]] : tensor<*xf64>) to tensor<*xf64>
