@@ -44,6 +44,8 @@ include_directories(${STANDALONE_BINARY_DIR}/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
+add_subdirectory(include)
+
 set(LLVM_TARGET_DEFINITIONS mlir/ToyCombine.td)
 mlir_tablegen(ToyCombine.inc -gen-rewriters)
 add_public_tablegen_target(MyToyCombineIncGen)
@@ -55,11 +57,13 @@ toyc.cpp
 parser/AST.cpp
 mlir/MLIRGen.cpp
 mlir/Dialect.cpp
+mlir/ShapeInferencePass.cpp
 mlir/ToyCombine.cpp
 
 DEPENDS
 MytoyOpsIncGen
 MyToyCombineIncGen
+MyToyShapeInferenceInterfaceIncGen
 )
 include_directories(include/)
 target_link_libraries(mytoy
@@ -72,5 +76,3 @@ PRIVATE
   MLIRParser
   MLIRSideEffectInterfaces
   MLIRTransforms)
-
-add_subdirectory(include)
