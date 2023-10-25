@@ -121,15 +121,15 @@ int dumpMLIR() {
   if (int error = loadMLIR(sourceMgr, context, module))
     return error;
 
+  mlir::PassManager pm(module.get()->getName());
+  // Apply any generic pass manager command line options and run the pipeline.
+  if (mlir::failed(mlir::applyPassManagerCLOptions(pm)))
+    return 4;
+
   // Check to see what granularity of MLIR we are compiling to.
   bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
 
   if (enableOpt || isLoweringToAffine) {
-    mlir::PassManager pm(module.get()->getName());
-    // Apply any generic pass manager command line options and run the pipeline.
-    if (mlir::failed(mlir::applyPassManagerCLOptions(pm)))
-      return 4;
-
     // Inline all functions into main and then delete them.
     pm.addPass(mlir::createInlinerPass());
 
@@ -139,27 +139,26 @@ int dumpMLIR() {
     optPM.addPass(mlir::mytoy::createShapeInferencePass());
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
-
-    if (isLoweringToAffine) {
-      // Partially lower the toy dialect.
-      pm.addPass(mlir::mytoy::createLowerToAffinePass());
-
-      // Add a few cleanups post lowering.
-      mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
-      optPM.addPass(mlir::createCanonicalizerPass());
-      optPM.addPass(mlir::createCSEPass());
-
-      // Add optimizations if enabled.
-      if (enableOpt) {
-        optPM.addPass(mlir::affine::createLoopFusionPass());
-        optPM.addPass(mlir::affine::createAffineScalarReplacementPass());
-      }
-    }
-
-
-    if (mlir::failed(pm.run(*module)))
-      return 4;
   }
+
+  if (isLoweringToAffine) {
+    // Partially lower the toy dialect.
+    pm.addPass(mlir::mytoy::createLowerToAffinePass());
+
+    // Add a few cleanups post lowering.
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
+
+    // Add optimizations if enabled.
+    if (enableOpt) {
+      optPM.addPass(mlir::affine::createLoopFusionPass());
+      optPM.addPass(mlir::affine::createAffineScalarReplacementPass());
+    }
+  }
+
+  if (mlir::failed(pm.run(*module)))
+    return 4;
 
   module->dump();
   return 0;
