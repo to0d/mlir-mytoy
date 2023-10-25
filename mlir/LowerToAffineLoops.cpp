@@ -69,6 +69,17 @@ void ToyToAffineLoweringPass::runOnOperation() {
     return llvm::none_of(op->getOperandTypes(),
                          [](Type type) { return llvm::isa<TensorType>(type); });
   });
+
+  // Now that the conversion target has been defined, we just need to provide
+  // the set of patterns that will lower the Toy operations.
+  RewritePatternSet patterns(&getContext());
+
+  // With the target and rewrite patterns defined, we can now attempt the
+  // conversion. The conversion will signal failure if any of our `illegal`
+  // operations were not converted successfully.
+  if (failed(
+          applyPartialConversion(getOperation(), target, std::move(patterns))))
+    signalPassFailure();
 }
 
 /// Create a pass for lowering operations in the `Affine` and `Std` dialects,

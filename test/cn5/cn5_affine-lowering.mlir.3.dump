@@ -1,0 +1,11 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:4:1: error: failed to legalize operation 'mytoy.func' that was explicitly marked illegal
+mytoy.func @main() {
+^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:4:1: note: see current operation: 
+"mytoy.func"() ({
+  %0 = "mytoy.constant"() {value = dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>} : () -> tensor<2x3xf64>
+  %1 = "mytoy.transpose"(%0) : (tensor<2x3xf64>) -> tensor<3x2xf64>
+  %2 = "mytoy.mul"(%1, %1) : (tensor<3x2xf64>, tensor<3x2xf64>) -> tensor<3x2xf64>
+  "mytoy.print"(%2) : (tensor<3x2xf64>) -> ()
+  "mytoy.return"() : () -> ()
+}) {function_type = () -> (), sym_name = "main"} : () -> ()
