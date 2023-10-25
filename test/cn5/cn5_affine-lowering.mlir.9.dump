@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:8:3: error: 'mytoy.print' op operand #0 must be tensor of 64-bit float values, but got 'memref<3x2xf64>'
+  mytoy.print %3 : tensor<3x2xf64>
+  ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:8:3: note: see current operation: "mytoy.print"(%0) : (memref<3x2xf64>) -> ()

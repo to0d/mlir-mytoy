@@ -248,6 +248,26 @@ struct PrintOpLowering : public OpConversionPattern<mytoy::PrintOp> {
 };
 
 //===----------------------------------------------------------------------===//
+// ToyToAffine RewritePatterns: Return operations
+//===----------------------------------------------------------------------===//
+
+struct ReturnOpLowering : public OpRewritePattern<mytoy::ReturnOp> {
+  using OpRewritePattern<mytoy::ReturnOp>::OpRewritePattern;
+
+  LogicalResult matchAndRewrite(mytoy::ReturnOp op,
+                                PatternRewriter &rewriter) const final {
+    // During this lowering, we expect that all function calls have been
+    // inlined.
+    if (op.hasOperand())
+      return failure();
+
+    // We lower "toy.return" directly to "func.return".
+    rewriter.replaceOpWithNewOp<func::ReturnOp>(op);
+    return success();
+  }
+};
+
+//===----------------------------------------------------------------------===//
 // ToyToAffine RewritePatterns: Transpose operations
 //===----------------------------------------------------------------------===//
 
@@ -326,7 +346,8 @@ void ToyToAffineLoweringPass::runOnOperation() {
   // the set of patterns that will lower the Toy operations.
   RewritePatternSet patterns(&getContext());
   patterns.add<FuncOpLowering, ConstantOpLowering, TransposeOpLowering,
-               AddOpLowering, MulOpLowering, PrintOpLowering>(&getContext());
+               AddOpLowering, MulOpLowering, PrintOpLowering,
+               ReturnOpLowering>(&getContext());
 
   // With the target and rewrite patterns defined, we can now attempt the
   // conversion. The conversion will signal failure if any of our `illegal`
