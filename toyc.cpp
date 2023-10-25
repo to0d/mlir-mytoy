@@ -148,6 +148,11 @@ int dumpMLIR() {
       mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
       optPM.addPass(mlir::createCanonicalizerPass());
       optPM.addPass(mlir::createCSEPass());
+
+      // Add optimizations if enabled.
+      if (enableOpt) {
+        optPM.addPass(mlir::affine::createLoopFusionPass());
+      }
     }
 
 

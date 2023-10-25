@@ -19,13 +19,9 @@ module {
       affine.for %arg1 = 0 to 2 {
         %0 = affine.load %alloc_6[%arg1, %arg0] : memref<2x3xf64>
         affine.store %0, %alloc_5[%arg0, %arg1] : memref<3x2xf64>
-      }
-    }
-    affine.for %arg0 = 0 to 3 {
-      affine.for %arg1 = 0 to 2 {
-        %0 = affine.load %alloc_5[%arg0, %arg1] : memref<3x2xf64>
-        %1 = arith.mulf %0, %0 : f64
-        affine.store %1, %alloc[%arg0, %arg1] : memref<3x2xf64>
+        %1 = affine.load %alloc_5[%arg0, %arg1] : memref<3x2xf64>
+        %2 = arith.mulf %1, %1 : f64
+        affine.store %2, %alloc[%arg0, %arg1] : memref<3x2xf64>
       }
     }
     mytoy.print %alloc : memref<3x2xf64>
