@@ -52,11 +52,15 @@ add_public_tablegen_target(MyToyCombineIncGen)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(extension_libs GLOBAL PROPERTY MLIR_EXTENSION_LIBS)
+
 add_llvm_executable(mytoy
 toyc.cpp
 parser/AST.cpp
 mlir/MLIRGen.cpp
 mlir/Dialect.cpp
+mlir/LowerToAffineLoops.cpp
 mlir/ShapeInferencePass.cpp
 mlir/ToyCombine.cpp
 
@@ -68,6 +72,8 @@ MyToyShapeInferenceInterfaceIncGen
 include_directories(include/)
 target_link_libraries(mytoy
 PRIVATE
+  ${dialect_libs}
+  ${extension_libs}
   MLIRSupport
   MLIRAnalysis
   MLIRCastInterfaces
