@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:8:3: error: failed to legalize operation 'mytoy.print' that was explicitly marked illegal
+  mytoy.print %3 : tensor<3x2xf64>
+  ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:8:3: note: see current operation: "mytoy.print"(%14) : (tensor<3x2xf64>) -> ()
