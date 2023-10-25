@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:5:8: error: failed to legalize operation 'mytoy.constant' that was explicitly marked illegal
+  %0 = mytoy.constant dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>
+       ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:5:8: note: see current operation: %0 = "mytoy.constant"() {value = dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>} : () -> tensor<2x3xf64>

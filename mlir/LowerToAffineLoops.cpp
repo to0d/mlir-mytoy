@@ -27,6 +27,37 @@
 using namespace mlir;
 
 //===----------------------------------------------------------------------===//
+// ToyToAffine RewritePatterns: Func operations
+//===----------------------------------------------------------------------===//
+
+struct FuncOpLowering : public OpConversionPattern<mytoy::FuncOp> {
+  using OpConversionPattern<mytoy::FuncOp>::OpConversionPattern;
+
+  LogicalResult
+  matchAndRewrite(mytoy::FuncOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const final {
+    // We only lower the main function as we expect that all other functions
+    // have been inlined.
+    if (op.getName() != "main")
+      return failure();
+
+    // Verify that the given main has no inputs and results.
+    if (op.getNumArguments() || op.getFunctionType().getNumResults()) {
+      return rewriter.notifyMatchFailure(op, [](Diagnostic &diag) {
+        diag << "expected 'main' to have 0 inputs and 0 results";
+      });
+    }
+
+    // Create a new non-toy function, with the same region.
+    auto func = rewriter.create<mlir::func::FuncOp>(op.getLoc(), op.getName(),
+                                                    op.getFunctionType());
+    rewriter.inlineRegionBefore(op.getRegion(), func.getBody(), func.end());
+    rewriter.eraseOp(op);
+    return success();
+  }
+};
+
+//===----------------------------------------------------------------------===//
 // ToyToAffineLoweringPass
 //===----------------------------------------------------------------------===//
 
@@ -73,6 +104,7 @@ void ToyToAffineLoweringPass::runOnOperation() {
   // Now that the conversion target has been defined, we just need to provide
   // the set of patterns that will lower the Toy operations.
   RewritePatternSet patterns(&getContext());
+  patterns.add<FuncOpLowering>(&getContext());
 
   // With the target and rewrite patterns defined, we can now attempt the
   // conversion. The conversion will signal failure if any of our `illegal`
