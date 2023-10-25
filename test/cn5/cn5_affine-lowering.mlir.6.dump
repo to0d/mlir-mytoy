@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:7:8: error: failed to legalize operation 'mytoy.mul' that was explicitly marked illegal
+  %3 = mytoy.mul %2, %2 : tensor<3x2xf64>
+       ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:7:8: note: see current operation: %13 = "mytoy.mul"(%12, %12) : (tensor<3x2xf64>, tensor<3x2xf64>) -> tensor<3x2xf64>
