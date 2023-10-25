@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:6:8: error: failed to legalize operation 'mytoy.transpose' that was explicitly marked illegal
+  %2 = mytoy.transpose(%0 : tensor<2x3xf64>) to tensor<3x2xf64>
+       ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:6:8: note: see current operation: %11 = "mytoy.transpose"(%10) : (tensor<2x3xf64>) -> tensor<3x2xf64>
