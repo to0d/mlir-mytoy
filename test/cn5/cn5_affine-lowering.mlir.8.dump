@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:9:3: error: failed to legalize operation 'mytoy.return' that was explicitly marked illegal
+  mytoy.return
+  ^
+/home/todd-wsl/mlir-mytoy/test/cn5_affine-lowering.mlir:9:3: note: see current operation: "mytoy.return"() : () -> ()
