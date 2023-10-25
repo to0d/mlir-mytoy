@@ -47,7 +47,28 @@ struct ToyToAffineLoweringPass
 } // namespace
 
 void ToyToAffineLoweringPass::runOnOperation() {
-  
+  // The first thing to define is the conversion target. This will define the
+  // final target for this lowering.
+  ConversionTarget target(getContext());
+
+  // We define the specific operations, or dialects, that are legal targets for
+  // this lowering. In our case, we are lowering to a combination of the
+  // `Affine`, `Arith`, `Func`, and `MemRef` dialects.
+  target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
+                         arith::ArithDialect, func::FuncDialect,
+                         memref::MemRefDialect>();
+
+  // We also define the Toy dialect as Illegal so that the conversion will fail
+  // if any of these operations are *not* converted. Given that we actually want
+  // a partial lowering, we explicitly mark the Toy operations that don't want
+  // to lower, `toy.print`, as `legal`. `toy.print` will still need its operands
+  // to be updated though (as we convert from TensorType to MemRefType), so we
+  // only treat it as `legal` if its operands are legal.
+  target.addIllegalDialect<mytoy::MyToyDialect>();
+  target.addDynamicallyLegalOp<mytoy::PrintOp>([](mytoy::PrintOp op) {
+    return llvm::none_of(op->getOperandTypes(),
+                         [](Type type) { return llvm::isa<TensorType>(type); });
+  });
 }
 
 /// Create a pass for lowering operations in the `Affine` and `Std` dialects,
