@@ -1,0 +1,1 @@
+loc("/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy":16:18): error: unable to infer shape of operation without shape inference interface

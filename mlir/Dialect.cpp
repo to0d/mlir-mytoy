@@ -266,6 +266,12 @@ mlir::LogicalResult StructConstantOp::verify() {
   return verifyConstantForType(getResult().getType(), getValue(), *this);
 }
 
+/// Infer the output shape of the ConstantOp, this is required by the shape
+/// inference interface.
+void ConstantOp::inferShapes() {
+  getResult().setType(cast<TensorType>(getValue().getType()));
+}
+
 //===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
