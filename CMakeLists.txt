@@ -79,6 +79,7 @@ PRIVATE
   MLIRAnalysis
   MLIRCastInterfaces
   MLIRCallInterfaces
+  MLIRExecutionEngine
   MLIRIR
   MLIRParser
   MLIRSideEffectInterfaces
