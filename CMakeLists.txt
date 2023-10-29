@@ -61,6 +61,7 @@ parser/AST.cpp
 mlir/MLIRGen.cpp
 mlir/Dialect.cpp
 mlir/LowerToAffineLoops.cpp
+mlir/LowerToLLVM.cpp
 mlir/ShapeInferencePass.cpp
 mlir/ToyCombine.cpp
 
