@@ -17,6 +17,7 @@
 #include "toy/Passes.h"
 
 #include "mlir/Dialect/Affine/Passes.h"
+#include "mlir/Dialect/LLVMIR/Transforms/Passes.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
 #include "mlir/IR/AsmState.h"
@@ -222,6 +223,11 @@ int dumpMLIR() {
   if (isLoweringToLLVM) {
     // Finish lowering the toy IR to the LLVM dialect.
     pm.addPass(mlir::mytoy::createLowerToLLVMPass());
+    // This is necessary to have line tables emitted and basic
+    // debugger working. In the future we will add proper debug information
+    // emission directly from our frontend.
+    pm.addNestedPass<mlir::LLVM::LLVMFuncOp>(
+        mlir::LLVM::createDIScopeForLLVMFuncOpPass());
   }
 
   if (mlir::failed(pm.run(*module)))
