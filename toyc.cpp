@@ -65,7 +65,8 @@ enum Action {
   DumpMLIR,
   DumpMLIRAffine,
   DumpMLIRLLVM,
-  DumpLLVMIR
+  DumpLLVMIR,
+  RunJIT
 };
 } // namespace
 static cl::opt<enum Action> emitAction(
@@ -76,7 +77,9 @@ static cl::opt<enum Action> emitAction(
                           "output the MLIR dump after affine lowering")),
     cl::values(clEnumValN(DumpMLIRLLVM, "mlir-llvm",
                           "output the MLIR dump after llvm lowering")),
-    cl::values(clEnumValN(DumpLLVMIR, "llvm", "output the LLVM IR dump"))
+    cl::values(clEnumValN(DumpLLVMIR, "llvm", "output the LLVM IR dump")),
+    cl::values(clEnumValN(RunJIT, "jit",
+                          "JIT the code and run it by invoking the main function"))
                           );
 
 static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
@@ -122,6 +125,39 @@ int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
     llvm::errs() << "Error can't load file " << inputFilename << "\n";
     return 3;
   }
+  return 0;
+}
+
+int runJit(mlir::ModuleOp module) {
+  // Initialize LLVM targets.
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
+
+  // Register the translation from MLIR to LLVM IR, which must happen before we
+  // can JIT-compile.
+  mlir::registerBuiltinDialectTranslation(*module->getContext());
+  mlir::registerLLVMDialectTranslation(*module->getContext());
+
+  // An optimization pipeline to use within the execution engine.
+  auto optPipeline = mlir::makeOptimizingTransformer(
+      /*optLevel=*/enableOpt ? 3 : 0, /*sizeLevel=*/0,
+      /*targetMachine=*/nullptr);
+
+  // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
+  // the module.
+  mlir::ExecutionEngineOptions engineOptions;
+  engineOptions.transformer = optPipeline;
+  auto maybeEngine = mlir::ExecutionEngine::create(module, engineOptions);
+  assert(maybeEngine && "failed to construct an execution engine");
+  auto &engine = maybeEngine.get();
+
+  // Invoke the JIT-compiled function.
+  auto invocationResult = engine->invokePacked("main");
+  if (invocationResult) {
+    llvm::errs() << "JIT invocation failed\n";
+    return -1;
+  }
+
   return 0;
 }
 
@@ -243,6 +279,10 @@ int dumpMLIR() {
   if (emitAction == Action::DumpLLVMIR)
     return dumpLLVMIR(*module);
   
+  // Otherwise, we must be running the jit.
+  if (emitAction == Action::RunJIT)
+    return runJit(*module);
+
   return 0;
 }
 
@@ -275,6 +315,7 @@ int main(int argc, char **argv) {
   case Action::DumpMLIRAffine:
   case Action::DumpMLIRLLVM:
   case Action::DumpLLVMIR:
+  case Action::RunJIT:
     return dumpMLIR();
   default:
     llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
