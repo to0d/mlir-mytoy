@@ -25,6 +25,7 @@
 #include "toy/Dialect.h"
 #include "toy/Passes.h"
 
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
@@ -56,6 +57,13 @@ void ToyToLLVMLoweringPass::runOnOperation() {
   LLVMConversionTarget target(getContext());
   target.addLegalOp<ModuleOp>();
 
+  // During this lowering, we will also be lowering the MemRef types, that are
+  // currently being operated on, to a representation in LLVM. To perform this
+  // conversion we use a TypeConverter as part of the lowering. This converter
+  // details how one type maps to another. This is necessary now that we will be
+  // doing more complicated lowerings, involving loop region arguments.
+  LLVMTypeConverter typeConverter(&getContext());
+
   // Now that the conversion target has been defined, we need to provide the
   // patterns used for lowering. At this point of the compilation process, we
   // have a combination of `toy`, `affine`, and `std` operations. Luckily, there
@@ -65,6 +73,7 @@ void ToyToLLVMLoweringPass::runOnOperation() {
   // patterns must be applied to fully transform an illegal operation into a
   // set of legal ones.
   RewritePatternSet patterns(&getContext());
+  populateFuncToLLVMConversionPatterns(typeConverter, patterns);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.
