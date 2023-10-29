@@ -35,6 +35,16 @@ def MyToyDialect : Dialect {
 class Toy_Op<string mnemonic, list<Trait> traits = []> :
     Op<MyToyDialect, mnemonic, traits>;
 
+// Provide a definition for the Toy StructType for use in ODS. This allows for
+// using StructType in a similar way to Tensor or MemRef. We use `DialectType`
+// to demarcate the StructType as belonging to the Toy dialect.
+def Toy_StructType :
+    DialectType<MyToyDialect, CPred<"::llvm::isa<StructType>($_self)">,
+                "Toy struct type">;
+
+// Provide a definition of the types that are used within the Toy dialect.
+def Toy_Type : AnyTypeOf<[F64Tensor, Toy_StructType]>;
+
 //===----------------------------------------------------------------------===//
 // Toy Operations
 //===----------------------------------------------------------------------===//
