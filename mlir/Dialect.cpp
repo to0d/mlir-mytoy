@@ -206,6 +206,66 @@ mlir::LogicalResult ConstantOp::verify() {
   return mlir::success();
 }
 
+/// Verify that the given attribute value is valid for the given type.
+static mlir::LogicalResult verifyConstantForType(mlir::Type type,
+                                                 mlir::Attribute opaqueValue,
+                                                 mlir::Operation *op) {
+  if (llvm::isa<mlir::TensorType>(type)) {
+    // Check that the value is an elements attribute.
+    auto attrValue = llvm::dyn_cast<mlir::DenseFPElementsAttr>(opaqueValue);
+    if (!attrValue)
+      return op->emitError("constant of TensorType must be initialized by "
+                           "a DenseFPElementsAttr, got ")
+             << opaqueValue;
+
+    // If the return type of the constant is not an unranked tensor, the shape
+    // must match the shape of the attribute holding the data.
+    auto resultType = llvm::dyn_cast<mlir::RankedTensorType>(type);
+    if (!resultType)
+      return success();
+
+    // Check that the rank of the attribute type matches the rank of the
+    // constant result type.
+    auto attrType = llvm::cast<mlir::RankedTensorType>(attrValue.getType());
+    if (attrType.getRank() != resultType.getRank()) {
+      return op->emitOpError("return type must match the one of the attached "
+                             "value attribute: ")
+             << attrType.getRank() << " != " << resultType.getRank();
+    }
+
+    // Check that each of the dimensions match between the two types.
+    for (int dim = 0, dimE = attrType.getRank(); dim < dimE; ++dim) {
+      if (attrType.getShape()[dim] != resultType.getShape()[dim]) {
+        return op->emitOpError(
+                   "return type shape mismatches its attribute at dimension ")
+               << dim << ": " << attrType.getShape()[dim]
+               << " != " << resultType.getShape()[dim];
+      }
+    }
+    return mlir::success();
+  }
+  auto resultType = llvm::cast<StructType>(type);
+  llvm::ArrayRef<mlir::Type> resultElementTypes = resultType.getElementTypes();
+
+  // Verify that the initializer is an Array.
+  auto attrValue = llvm::dyn_cast<ArrayAttr>(opaqueValue);
+  if (!attrValue || attrValue.getValue().size() != resultElementTypes.size())
+    return op->emitError("constant of StructType must be initialized by an "
+                         "ArrayAttr with the same number of elements, got ")
+           << opaqueValue;
+
+  // Check that each of the elements are valid.
+  llvm::ArrayRef<mlir::Attribute> attrElementValues = attrValue.getValue();
+  for (const auto it : llvm::zip(resultElementTypes, attrElementValues))
+    if (failed(verifyConstantForType(std::get<0>(it), std::get<1>(it), op)))
+      return mlir::failure();
+  return mlir::success();
+}
+
+mlir::LogicalResult StructConstantOp::verify() {
+  return verifyConstantForType(getResult().getType(), getValue(), *this);
+}
+
 //===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
@@ -392,6 +452,34 @@ mlir::LogicalResult ReturnOp::verify() {
   return emitError() << "type of return operand (" << inputType
                      << ") doesn't match function result type (" << resultType
                      << ")";
+}
+
+//===----------------------------------------------------------------------===//
+// StructAccessOp
+//===----------------------------------------------------------------------===//
+
+void StructAccessOp::build(mlir::OpBuilder &b, mlir::OperationState &state,
+                           mlir::Value input, size_t index) {
+  // Extract the result type from the input type.
+  StructType structTy = llvm::cast<StructType>(input.getType());
+  assert(index < structTy.getNumElementTypes());
+  mlir::Type resultType = structTy.getElementTypes()[index];
+
+  // Call into the auto-generated build method.
+  build(b, state, resultType, input, b.getI64IntegerAttr(index));
+}
+
+mlir::LogicalResult StructAccessOp::verify() {
+  StructType structTy = llvm::cast<StructType>(getInput().getType());
+  size_t indexValue = getIndex();
+  if (indexValue >= structTy.getNumElementTypes())
+    return emitOpError()
+           << "index should be within the range of the input struct type";
+  mlir::Type resultType = getResult().getType();
+  if (resultType != structTy.getElementTypes()[indexValue])
+    return emitOpError() << "must have the same result type as the struct "
+                            "element referred to by the index";
+  return mlir::success();
 }
 
 //===----------------------------------------------------------------------===//
