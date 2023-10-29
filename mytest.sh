@@ -70,22 +70,30 @@ if [ $lt_action_run == 1 ]; then
     # query test
     test_sh_list=$(ls $workspace | grep -e ".toy")
     for pt_name in $test_sh_list
-    {        
+    {      
+        case_fail=0  
         test_path=$workspace/$pt_name 
-        cmd=$(cat $test_path | grep "# RUN:" | awk -F : '{print $2}')
+        cmd_list=$(cat $test_path | grep "# RUN:" | awk -F : '{print $2}')
         
-        a=$(echo $test_path | sed 's#\/#\\\/#g')
-        cmd=$(echo $cmd | sed "s/%s/$a/g")
-        echo -n $test_path
-        rst=$(eval $cmd 2>&1)
+        echo "$cmd_list" | 
+        while read cmd; do
+            a=$(echo $test_path | sed 's#\/#\\\/#g')
+            cmd=$(echo $cmd | sed "s/%s/$a/g")
+            rst=$(eval $cmd 2>&1)
 
-        if [ "$rst" = "" ]
+            if [ ! "$rst" = "" ]
+            then
+                echo "    : "$cmd
+                case_fail=`expr $case_fail + 1`
+            fi
+        done
+
+        if [ $case_fail == 0 ]
         then
-            echo ", succ"
+            echo $test_path ", succ"
             lt_succ=`expr $lt_succ + 1`
         else 
-            echo ", fail"
-            echo "    : "$cmd
+            echo $test_path ", fail"
         fi
 
         lt_total=`expr $lt_total + 1`

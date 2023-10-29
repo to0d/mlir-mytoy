@@ -35,6 +35,10 @@ struct StructTypeStorage;
 /// dialect.
 #include "toy/Dialect.h.inc"
 
+//===----------------------------------------------------------------------===//
+// Toy Operations
+//===----------------------------------------------------------------------===//
+
 /// Include the auto-generated header file containing the declarations of the
 /// toy operations.
 #define GET_OP_CLASSES

@@ -83,7 +83,6 @@ struct ToyInlinerInterface : public DialectInlinerInterface {
   }
 };
 
-
 //===----------------------------------------------------------------------===//
 // Toy Operations
 //===----------------------------------------------------------------------===//
@@ -150,7 +149,7 @@ void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
   ConstantOp::build(builder, state, dataType, dataAttribute);
 }
 
-/// The 'OpAsmPrinter' class provides a collection of methods for parsing
+/// The 'OpAsmParser' class provides a collection of methods for parsing
 /// various punctuation, as well as attributes, operands, types, etc. Each of
 /// these methods returns a `ParseResult`. This class is a wrapper around
 /// `LogicalResult` that can be converted to a boolean `true` value on failure,
@@ -174,36 +173,6 @@ void ConstantOp::print(mlir::OpAsmPrinter &printer) {
   printer << " ";
   printer.printOptionalAttrDict((*this)->getAttrs(), /*elidedAttrs=*/{"value"});
   printer << getValue();
-}
-
-/// Verifier for the constant operation. This corresponds to the
-/// `let hasVerifier = 1` in the op definition.
-mlir::LogicalResult ConstantOp::verify() {
-  // If the return type of the constant is not an unranked tensor, the shape
-  // must match the shape of the attribute holding the data.
-  auto resultType = llvm::dyn_cast<mlir::RankedTensorType>(getResult().getType());
-  if (!resultType)
-    return success();
-
-  // Check that the rank of the attribute type matches the rank of the constant
-  // result type.
-  auto attrType = llvm::cast<mlir::RankedTensorType>(getValue().getType());
-  if (attrType.getRank() != resultType.getRank()) {
-    return emitOpError("return type must match the one of the attached value "
-                       "attribute: ")
-           << attrType.getRank() << " != " << resultType.getRank();
-  }
-
-  // Check that each of the dimensions match between the two types.
-  for (int dim = 0, dimE = attrType.getRank(); dim < dimE; ++dim) {
-    if (attrType.getShape()[dim] != resultType.getShape()[dim]) {
-      return emitOpError(
-                 "return type shape mismatches its attribute at dimension ")
-             << dim << ": " << attrType.getShape()[dim]
-             << " != " << resultType.getShape()[dim];
-    }
-  }
-  return mlir::success();
 }
 
 /// Verify that the given attribute value is valid for the given type.
@@ -260,6 +229,12 @@ static mlir::LogicalResult verifyConstantForType(mlir::Type type,
     if (failed(verifyConstantForType(std::get<0>(it), std::get<1>(it), op)))
       return mlir::failure();
   return mlir::success();
+}
+
+/// Verifier for the constant operation. This corresponds to the `::verify(...)`
+/// in the op definition.
+mlir::LogicalResult ConstantOp::verify() {
+  return verifyConstantForType(getResult().getType(), getValue(), *this);
 }
 
 mlir::LogicalResult StructConstantOp::verify() {

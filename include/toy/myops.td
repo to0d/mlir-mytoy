@@ -26,8 +26,14 @@ def MyToyDialect : Dialect {
   let name = "mytoy";
   let cppNamespace = "::mlir::mytoy";
 
-  let useDefaultTypePrinterParser = 1;
+  // We set this bit to generate a declaration of the `materializeConstant`
+  // method so that we can materialize constants for our toy operations.
   let hasConstantMaterializer = 1;
+
+  // We set this bit to generate the declarations for the dialect's type parsing
+  // and printing hooks.
+  let useDefaultTypePrinterParser = 1;
+
 }
 
 // Base class for toy dialect operations. This operation inherits from the base
@@ -60,9 +66,9 @@ def Toy_Type : AnyTypeOf<[F64Tensor, Toy_StructType]>;
 // Here we provide the mnemonic and a list of traits for the operation. The
 // constant operation is marked as 'Pure' as it is a pure operation
 // and may be removed if dead.
-def ConstantOp : Toy_Op<"constant", 
-  [ConstantLike, Pure, 
-  DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+def ConstantOp : Toy_Op<"constant",
+    [ConstantLike, Pure,
+     DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
   // Provide a summary and description for this operation. This can be used to
   // auto-generate documentation of the operations within our dialect.
   let summary = "constant";
@@ -100,7 +106,8 @@ def ConstantOp : Toy_Op<"constant",
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
-  
+
+  // Set the folder bit so that we can implement constant folders.
   let hasFolder = 1;
 }
 
@@ -231,7 +238,8 @@ def GenericCallOp : Toy_Op<"generic_call",
   // callee, and inputs for the call.
   let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Toy_Type>:$inputs);
 
-  // The generic call operation returns a single value of TensorType.
+  // The generic call operation returns a single value of TensorType or
+  // StructType.
   let results = (outs Toy_Type);
 
   // Specialize assembly printing and parsing using a declarative format.
@@ -304,15 +312,15 @@ def ReshapeOp : Toy_Op<"reshape", [Pure]> {
 
   let arguments = (ins F64Tensor:$input);
 
-  // We expect that the reshape operation returns a statically shaped tensor.
-  let results = (outs StaticShapeTensorOf<[F64]>);
-
   let assemblyFormat = [{
     `(` $input `:` type($input) `)` attr-dict `to` type(results)
   }];
 
   // Enable registering canonicalization patterns with this operation.
   let hasCanonicalizer = 1;
+
+  // We expect that the reshape operation returns a statically shaped tensor.
+  let results = (outs StaticShapeTensorOf<[F64]>);
 }
 
 //===----------------------------------------------------------------------===//
@@ -324,7 +332,7 @@ def ReturnOp : Toy_Op<"return", [Pure, HasParent<"FuncOp">,
   let summary = "return operation";
   let description = [{
     The "return" operation represents a return operation within a function.
-    The operation takes an optional tensor operand and produces no results.
+    The operation takes an optional operand and produces no results.
     The operand type must match the signature of the function that contains
     the operation. For example:
 
@@ -381,6 +389,8 @@ def StructAccessOp : Toy_Op<"struct_access", [Pure]> {
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
+
+  // Set the folder bit so that we can fold constant accesses.
   let hasFolder = 1;
 }
 
@@ -410,7 +420,6 @@ def StructConstantOp : Toy_Op<"struct_constant", [ConstantLike, Pure]> {
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
   let hasFolder = 1;
-
 }
 
 //===----------------------------------------------------------------------===//
