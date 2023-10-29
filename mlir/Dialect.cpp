@@ -673,3 +673,14 @@ void MyToyDialect::initialize() {
   addInterfaces<ToyInlinerInterface>();
   addTypes<StructType>();
 }
+
+mlir::Operation *MyToyDialect::materializeConstant(mlir::OpBuilder &builder,
+                                                 mlir::Attribute value,
+                                                 mlir::Type type,
+                                                 mlir::Location loc) {
+  if (llvm::isa<StructType>(type))
+    return builder.create<StructConstantOp>(loc, type,
+                                            llvm::cast<mlir::ArrayAttr>(value));
+  return builder.create<ConstantOp>(loc, type,
+                                    llvm::cast<mlir::DenseElementsAttr>(value));
+}

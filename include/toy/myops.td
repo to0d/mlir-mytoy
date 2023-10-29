@@ -27,6 +27,7 @@ def MyToyDialect : Dialect {
   let cppNamespace = "::mlir::mytoy";
 
   let useDefaultTypePrinterParser = 1;
+  let hasConstantMaterializer = 1;
 }
 
 // Base class for toy dialect operations. This operation inherits from the base
