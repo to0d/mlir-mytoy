@@ -29,6 +29,7 @@
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
+#include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
 #include "mlir/Pass/Pass.h"
@@ -76,6 +77,7 @@ void ToyToLLVMLoweringPass::runOnOperation() {
   RewritePatternSet patterns(&getContext());
   populateFuncToLLVMConversionPatterns(typeConverter, patterns);
   mlir::arith::populateArithToLLVMConversionPatterns(typeConverter, patterns);
+  populateFinalizeMemRefToLLVMConversionPatterns(typeConverter, patterns);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.

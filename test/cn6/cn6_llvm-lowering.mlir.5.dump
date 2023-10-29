@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn6_llvm-lowering.mlir:4:8: error: failed to legalize operation 'affine.store'
+  %0 = mytoy.constant dense<[[1.000000e+00, 2.000000e+00, 3.000000e+00], [4.000000e+00, 5.000000e+00, 6.000000e+00]]> : tensor<2x3xf64>
+       ^
+/home/todd-wsl/mlir-mytoy/test/cn6_llvm-lowering.mlir:4:8: note: see current operation: "affine.store"(%11, %65) {map = affine_map<() -> (0, 0)>} : (f64, memref<2x3xf64>) -> ()
