@@ -224,10 +224,10 @@ def GenericCallOp : Toy_Op<"generic_call",
 
   // The generic call operation takes a symbol reference attribute as the
   // callee, and inputs for the call.
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<F64Tensor>:$inputs);
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<Toy_Type>:$inputs);
 
   // The generic call operation returns a single value of TensorType.
-  let results = (outs F64Tensor);
+  let results = (outs Toy_Type);
 
   // Specialize assembly printing and parsing using a declarative format.
   let assemblyFormat = [{
@@ -333,7 +333,7 @@ def ReturnOp : Toy_Op<"return", [Pure, HasParent<"FuncOp">,
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins Variadic<F64Tensor>:$input);
+  let arguments = (ins Variadic<Toy_Type>:$input);
 
   // The return operation only emits the input in the format if it is present.
   let assemblyFormat = "($input^ `:` type($input))? attr-dict ";
