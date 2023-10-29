@@ -1,0 +1,1 @@
+mytoy: /home/todd-wsl/llvm-project/mlir/include/mlir/IR/Matchers.h:91: bool mlir::detail::constant_op_binder<mlir::Attribute>::match(mlir::Operation *) [AttrT = mlir::Attribute]: Assertion `succeeded(result) && "expected ConstantLike op to be foldable"' failed.

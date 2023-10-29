@@ -97,6 +97,8 @@ def ConstantOp : Toy_Op<"constant", [ConstantLike, Pure]> {
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
+  
+  let hasFolder = 1;
 }
 
 //===----------------------------------------------------------------------===//
