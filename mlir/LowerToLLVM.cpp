@@ -50,7 +50,27 @@ struct ToyToLLVMLoweringPass
 } // namespace
 
 void ToyToLLVMLoweringPass::runOnOperation() {
+  // The first thing to define is the conversion target. This will define the
+  // final target for this lowering. For this lowering, we are only targeting
+  // the LLVM dialect.
+  LLVMConversionTarget target(getContext());
+  target.addLegalOp<ModuleOp>();
 
+  // Now that the conversion target has been defined, we need to provide the
+  // patterns used for lowering. At this point of the compilation process, we
+  // have a combination of `toy`, `affine`, and `std` operations. Luckily, there
+  // are already exists a set of patterns to transform `affine` and `std`
+  // dialects. These patterns lowering in multiple stages, relying on transitive
+  // lowerings. Transitive lowering, or A->B->C lowering, is when multiple
+  // patterns must be applied to fully transform an illegal operation into a
+  // set of legal ones.
+  RewritePatternSet patterns(&getContext());
+
+  // We want to completely lower to LLVM, so we use a `FullConversion`. This
+  // ensures that only legal operations will remain after the conversion.
+  auto module = getOperation();
+  if (failed(applyFullConversion(module, target, std::move(patterns))))
+    signalPassFailure();
 }
 
 /// Create a pass for lowering operations the remaining `Toy` operations, as
