@@ -380,6 +380,7 @@ def StructAccessOp : Toy_Op<"struct_access", [Pure]> {
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
+  let hasFolder = 1;
 }
 
 //===----------------------------------------------------------------------===//
