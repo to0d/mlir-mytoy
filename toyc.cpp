@@ -34,6 +34,7 @@
 #include "mlir/Transforms/Passes.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -78,9 +79,9 @@ static cl::opt<enum Action> emitAction(
     cl::values(clEnumValN(DumpMLIRLLVM, "mlir-llvm",
                           "output the MLIR dump after llvm lowering")),
     cl::values(clEnumValN(DumpLLVMIR, "llvm", "output the LLVM IR dump")),
-    cl::values(clEnumValN(RunJIT, "jit",
-                          "JIT the code and run it by invoking the main function"))
-                          );
+    cl::values(
+        clEnumValN(RunJIT, "jit",
+                   "JIT the code and run it by invoking the main function")));
 
 static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
 
@@ -98,7 +99,7 @@ std::unique_ptr<mytoy::ModuleAST> parseInputFile(llvm::StringRef filename) {
   return parser.parseModule();
 }
 
-int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
+int loadMLIR(mlir::MLIRContext &context,
              mlir::OwningOpRef<mlir::ModuleOp> &module) {
   // Handle '.toy' input to the compiler.
   if (inputType != InputType::MLIR &&
@@ -119,6 +120,7 @@ int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
   }
 
   // Parse the input mlir.
+  llvm::SourceMgr sourceMgr;
   sourceMgr.AddNewSourceBuffer(std::move(*fileOrErr), llvm::SMLoc());
   module = mlir::parseSourceFile<mlir::ModuleOp>(sourceMgr, &context);
   if (!module) {
@@ -128,36 +130,74 @@ int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
   return 0;
 }
 
-int runJit(mlir::ModuleOp module) {
-  // Initialize LLVM targets.
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
+int loadAndProcessMLIR(mlir::MLIRContext &context,
+                       mlir::OwningOpRef<mlir::ModuleOp> &module) {
+  if (int error = loadMLIR(context, module))
+    return error;
 
-  // Register the translation from MLIR to LLVM IR, which must happen before we
-  // can JIT-compile.
-  mlir::registerBuiltinDialectTranslation(*module->getContext());
-  mlir::registerLLVMDialectTranslation(*module->getContext());
+  mlir::PassManager pm(module.get()->getName());
+  // Apply any generic pass manager command line options and run the pipeline.
+  if (mlir::failed(mlir::applyPassManagerCLOptions(pm)))
+    return 4;
 
-  // An optimization pipeline to use within the execution engine.
-  auto optPipeline = mlir::makeOptimizingTransformer(
-      /*optLevel=*/enableOpt ? 3 : 0, /*sizeLevel=*/0,
-      /*targetMachine=*/nullptr);
+  // Check to see what granularity of MLIR we are compiling to.
+  bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
+  bool isLoweringToLLVM = emitAction >= Action::DumpMLIRLLVM;
 
-  // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
-  // the module.
-  mlir::ExecutionEngineOptions engineOptions;
-  engineOptions.transformer = optPipeline;
-  auto maybeEngine = mlir::ExecutionEngine::create(module, engineOptions);
-  assert(maybeEngine && "failed to construct an execution engine");
-  auto &engine = maybeEngine.get();
+  if (enableOpt || isLoweringToAffine) {
+    // Inline all functions into main and then delete them.
+    pm.addPass(mlir::createInlinerPass());
 
-  // Invoke the JIT-compiled function.
-  auto invocationResult = engine->invokePacked("main");
-  if (invocationResult) {
-    llvm::errs() << "JIT invocation failed\n";
-    return -1;
+    // Now that there is only one function, we can infer the shapes of each of
+    // the operations.
+    mlir::OpPassManager &optPM = pm.nest<mlir::mytoy::FuncOp>();
+    optPM.addPass(mlir::mytoy::createShapeInferencePass());
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
   }
 
+  if (isLoweringToAffine) {
+    // Partially lower the toy dialect.
+    pm.addPass(mlir::mytoy::createLowerToAffinePass());
+
+    // Add a few cleanups post lowering.
+    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
+    optPM.addPass(mlir::createCanonicalizerPass());
+    optPM.addPass(mlir::createCSEPass());
+
+    // Add optimizations if enabled.
+    if (enableOpt) {
+      optPM.addPass(mlir::affine::createLoopFusionPass());
+      optPM.addPass(mlir::affine::createAffineScalarReplacementPass());
+    }
+  }
+
+  if (isLoweringToLLVM) {
+    // Finish lowering the toy IR to the LLVM dialect.
+    pm.addPass(mlir::mytoy::createLowerToLLVMPass());
+    // This is necessary to have line tables emitted and basic
+    // debugger working. In the future we will add proper debug information
+    // emission directly from our frontend.
+    pm.addNestedPass<mlir::LLVM::LLVMFuncOp>(
+        mlir::LLVM::createDIScopeForLLVMFuncOpPass());
+  }
+
+  if (mlir::failed(pm.run(*module)))
+    return 4;
+  return 0;
+}
+
+int dumpAST() {
+  if (inputType == InputType::MLIR) {
+    llvm::errs() << "Can't dump a Toy AST when the input is MLIR\n";
+    return 5;
+  }
+
+  auto moduleAST = parseInputFile(inputFilename);
+  if (!moduleAST)
+    return 1;
+
+  dump(*moduleAST);
   return 0;
 }
 
@@ -205,98 +245,36 @@ int dumpLLVMIR(mlir::ModuleOp module) {
   return 0;
 }
 
-int dumpMLIR() {
-  mlir::DialectRegistry registry;
-  mlir::func::registerAllExtensions(registry);
+int runJit(mlir::ModuleOp module) {
+  // Initialize LLVM targets.
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
 
-  mlir::MLIRContext context(registry);
-  // Load our Dialect in this MLIR Context.
-  context.getOrLoadDialect<mlir::mytoy::MyToyDialect>();
+  // Register the translation from MLIR to LLVM IR, which must happen before we
+  // can JIT-compile.
+  mlir::registerBuiltinDialectTranslation(*module->getContext());
+  mlir::registerLLVMDialectTranslation(*module->getContext());
 
-  mlir::OwningOpRef<mlir::ModuleOp> module;
-  llvm::SourceMgr sourceMgr;
-  mlir::SourceMgrDiagnosticHandler sourceMgrHandler(sourceMgr, &context);
-  if (int error = loadMLIR(sourceMgr, context, module))
-    return error;
+  // An optimization pipeline to use within the execution engine.
+  auto optPipeline = mlir::makeOptimizingTransformer(
+      /*optLevel=*/enableOpt ? 3 : 0, /*sizeLevel=*/0,
+      /*targetMachine=*/nullptr);
 
-  mlir::PassManager pm(module.get()->getName());
-  // Apply any generic pass manager command line options and run the pipeline.
-  if (mlir::failed(mlir::applyPassManagerCLOptions(pm)))
-    return 4;
+  // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
+  // the module.
+  mlir::ExecutionEngineOptions engineOptions;
+  engineOptions.transformer = optPipeline;
+  auto maybeEngine = mlir::ExecutionEngine::create(module, engineOptions);
+  assert(maybeEngine && "failed to construct an execution engine");
+  auto &engine = maybeEngine.get();
 
-  // Check to see what granularity of MLIR we are compiling to.
-  bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
-  bool isLoweringToLLVM = emitAction >= Action::DumpMLIRLLVM;
-
-  if (enableOpt || isLoweringToAffine || isLoweringToLLVM) {
-    // Inline all functions into main and then delete them.
-    pm.addPass(mlir::createInlinerPass());
-
-    // Now that there is only one function, we can infer the shapes of each of
-    // the operations.
-    mlir::OpPassManager &optPM = pm.nest<mlir::mytoy::FuncOp>();
-    optPM.addPass(mlir::mytoy::createShapeInferencePass());
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
+  // Invoke the JIT-compiled function.
+  auto invocationResult = engine->invokePacked("main");
+  if (invocationResult) {
+    llvm::errs() << "JIT invocation failed\n";
+    return -1;
   }
 
-  if (isLoweringToAffine) {
-    // Partially lower the toy dialect.
-    pm.addPass(mlir::mytoy::createLowerToAffinePass());
-
-    // Add a few cleanups post lowering.
-    mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
-
-    // Add optimizations if enabled.
-    if (enableOpt) {
-      optPM.addPass(mlir::affine::createLoopFusionPass());
-      optPM.addPass(mlir::affine::createAffineScalarReplacementPass());
-    }
-  }
-
-  if (isLoweringToLLVM) {
-    // Finish lowering the toy IR to the LLVM dialect.
-    pm.addPass(mlir::mytoy::createLowerToLLVMPass());
-    // This is necessary to have line tables emitted and basic
-    // debugger working. In the future we will add proper debug information
-    // emission directly from our frontend.
-    pm.addNestedPass<mlir::LLVM::LLVMFuncOp>(
-        mlir::LLVM::createDIScopeForLLVMFuncOpPass());
-  }
-
-  if (mlir::failed(pm.run(*module)))
-    return 4;
-
-  bool isOutputingMLIR = emitAction <= Action::DumpMLIRLLVM;
-  if (isOutputingMLIR) {
-    module->dump();
-    return 0;
-  }
-
-  // Check to see if we are compiling to LLVM IR.
-  if (emitAction == Action::DumpLLVMIR)
-    return dumpLLVMIR(*module);
-  
-  // Otherwise, we must be running the jit.
-  if (emitAction == Action::RunJIT)
-    return runJit(*module);
-
-  return 0;
-}
-
-int dumpAST() {
-  if (inputType == InputType::MLIR) {
-    llvm::errs() << "Can't dump a Toy AST when the input is MLIR\n";
-    return 5;
-  }
-
-  auto moduleAST = parseInputFile(inputFilename);
-  if (!moduleAST)
-    return 1;
-
-  dump(*moduleAST);
   return 0;
 }
 
@@ -308,18 +286,36 @@ int main(int argc, char **argv) {
 
   cl::ParseCommandLineOptions(argc, argv, "toy compiler\n");
 
-  switch (emitAction) {
-  case Action::DumpAST:
+  if (emitAction == Action::DumpAST)
     return dumpAST();
-  case Action::DumpMLIR:
-  case Action::DumpMLIRAffine:
-  case Action::DumpMLIRLLVM:
-  case Action::DumpLLVMIR:
-  case Action::RunJIT:
-    return dumpMLIR();
-  default:
-    llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
+
+  // If we aren't dumping the AST, then we are compiling with/to MLIR.
+  mlir::DialectRegistry registry;
+  mlir::func::registerAllExtensions(registry);
+
+  mlir::MLIRContext context(registry);
+  // Load our Dialect in this MLIR Context.
+  context.getOrLoadDialect<mlir::mytoy::MyToyDialect>();
+
+  mlir::OwningOpRef<mlir::ModuleOp> module;
+  if (int error = loadAndProcessMLIR(context, module))
+    return error;
+
+  // If we aren't exporting to non-mlir, then we are done.
+  bool isOutputingMLIR = emitAction <= Action::DumpMLIRLLVM;
+  if (isOutputingMLIR) {
+    module->dump();
+    return 0;
   }
 
-  return 0;
+  // Check to see if we are compiling to LLVM IR.
+  if (emitAction == Action::DumpLLVMIR)
+    return dumpLLVMIR(*module);
+
+  // Otherwise, we must be running the jit.
+  if (emitAction == Action::RunJIT)
+    return runJit(*module);
+
+  llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
+  return -1;
 }
