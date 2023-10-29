@@ -25,6 +25,8 @@ include "toy/ShapeInferenceInterface.td"
 def MyToyDialect : Dialect {
   let name = "mytoy";
   let cppNamespace = "::mlir::mytoy";
+
+  let useDefaultTypePrinterParser = 1;
 }
 
 // Base class for toy dialect operations. This operation inherits from the base
