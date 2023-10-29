@@ -26,6 +26,9 @@ namespace {
 /// Fold constants.
 OpFoldResult ConstantOp::fold(FoldAdaptor adaptor) { return getValue(); }
 
+/// Fold struct constants.
+OpFoldResult StructConstantOp::fold(FoldAdaptor adaptor) { return getValue(); }
+
 /// This is an example of a c++ rewrite pattern for the TransposeOp. It
 /// optimizes the following scenario: transpose(transpose(x)) -> x
 struct SimplifyRedundantTranspose : public mlir::OpRewritePattern<TransposeOp> {
