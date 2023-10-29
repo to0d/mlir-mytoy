@@ -1,0 +1,39 @@
+  Module:
+    Struct: Struct @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:3:1
+      Variables: [
+        VarDecl a<> @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:4:3
+        VarDecl b<> @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:5:3
+      ]
+    Function 
+      Proto 'multiply_transpose' @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:9:1
+      Params: [value]
+      Block {
+        Return
+          BinOp: * @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:31
+            Call 'transpose' [ @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:10
+              BinOp: . @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:26
+                var: value @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:20
+                var: a @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:26
+            ]
+            Call 'transpose' [ @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:31
+              BinOp: . @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:47
+                var: value @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:41
+                var: b @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:11:47
+            ]
+      } // Block
+    Function 
+      Proto 'main' @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:14:1
+      Params: []
+      Block {
+        VarDecl value<Struct> @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:16:3
+          Struct Literal:             Literal: <2, 3>[ <3>[ 1.000000e+00, 2.000000e+00, 3.000000e+00], <3>[ 4.000000e+00, 5.000000e+00, 6.000000e+00]] @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:16:19
+            Literal: <2, 3>[ <3>[ 1.000000e+00, 2.000000e+00, 3.000000e+00], <3>[ 4.000000e+00, 5.000000e+00, 6.000000e+00]] @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:16:43
+           @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:16:18
+        VarDecl c<> @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:19:3
+          Call 'multiply_transpose' [ @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:19:11
+            var: value @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:19:30
+          ]
+        Print [ @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:20:3
+          var: c @/home/todd-wsl/mlir-mytoy/test/cn7_struct-ast.toy:20:9
+        ]
+      } // Block

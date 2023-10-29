@@ -57,8 +57,8 @@ public:
     // add them to the module.
     theModule = mlir::ModuleOp::create(builder.getUnknownLoc());
 
-    for (FunctionAST &f : moduleAST)
-      mlirGen(f);
+    // for (FunctionAST &f : moduleAST)
+    //   mlirGen(f);
 
     // Verify the module after we have finished constructing it, this will check
     // the structural properties of the IR and invoke any specific verifiers we
