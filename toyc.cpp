@@ -52,14 +52,23 @@ static cl::opt<enum InputType> inputType(
                           "load the input file as an MLIR file")));
 
 namespace {
-enum Action { None, DumpAST, DumpMLIR, DumpMLIRAffine };
+enum Action {
+  None,
+  DumpAST,
+  DumpMLIR,
+  DumpMLIRAffine,
+  DumpMLIRLLVM
+};
 } // namespace
 static cl::opt<enum Action> emitAction(
     "emit", cl::desc("Select the kind of output desired"),
     cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
     cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")),
     cl::values(clEnumValN(DumpMLIRAffine, "mlir-affine",
-                          "output the MLIR dump after affine lowering")));
+                          "output the MLIR dump after affine lowering")),
+    cl::values(clEnumValN(DumpMLIRLLVM, "mlir-llvm",
+                          "output the MLIR dump after llvm lowering"))
+                          );
 
 static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
 
@@ -128,8 +137,9 @@ int dumpMLIR() {
 
   // Check to see what granularity of MLIR we are compiling to.
   bool isLoweringToAffine = emitAction >= Action::DumpMLIRAffine;
+  bool isLoweringToLLVM = emitAction >= Action::DumpMLIRLLVM;
 
-  if (enableOpt || isLoweringToAffine) {
+  if (enableOpt || isLoweringToAffine || isLoweringToLLVM) {
     // Inline all functions into main and then delete them.
     pm.addPass(mlir::createInlinerPass());
 
@@ -155,6 +165,11 @@ int dumpMLIR() {
       optPM.addPass(mlir::affine::createLoopFusionPass());
       optPM.addPass(mlir::affine::createAffineScalarReplacementPass());
     }
+  }
+
+  if (isLoweringToLLVM) {
+    // Finish lowering the toy IR to the LLVM dialect.
+    pm.addPass(mlir::mytoy::createLowerToLLVMPass());
   }
 
   if (mlir::failed(pm.run(*module)))
@@ -191,6 +206,7 @@ int main(int argc, char **argv) {
     return dumpAST();
   case Action::DumpMLIR:
   case Action::DumpMLIRAffine:
+  case Action::DumpMLIRLLVM:
     return dumpMLIR();
   default:
     llvm::errs() << "No action specified (parsing only?), use -emit=<action>\n";
