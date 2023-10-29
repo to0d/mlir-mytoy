@@ -25,6 +25,7 @@
 #include "toy/Dialect.h"
 #include "toy/Passes.h"
 
+#include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
 #include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
 #include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
 #include "mlir/Conversion/LLVMCommon/TypeConverter.h"
@@ -74,6 +75,7 @@ void ToyToLLVMLoweringPass::runOnOperation() {
   // set of legal ones.
   RewritePatternSet patterns(&getContext());
   populateFuncToLLVMConversionPatterns(typeConverter, patterns);
+  mlir::arith::populateArithToLLVMConversionPatterns(typeConverter, patterns);
 
   // We want to completely lower to LLVM, so we use a `FullConversion`. This
   // ensures that only legal operations will remain after the conversion.

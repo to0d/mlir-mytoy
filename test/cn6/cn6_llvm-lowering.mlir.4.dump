@@ -1,0 +1,4 @@
+/home/todd-wsl/mlir-mytoy/test/cn6_llvm-lowering.mlir:6:8: error: failed to legalize operation 'memref.alloc'
+  %3 = mytoy.mul %2, %2 : tensor<3x2xf64>
+       ^
+/home/todd-wsl/mlir-mytoy/test/cn6_llvm-lowering.mlir:6:8: note: see current operation: %12 = "memref.alloc"() <{operandSegmentSizes = array<i32: 0, 0>}> : () -> memref<3x2xf64>
